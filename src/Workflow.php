@@ -84,13 +84,13 @@ class Workflow
      */
     public function execute(ContextInterface $context, $event = null)
     {
-        $this->eventDispatcher->dispatch(WorkflowEventContraint::BEGIN_EXECUTION, new WorkflowEvent($context));
+        $this->eventDispatcher->dispatch(WorkflowEvents::BEGIN_EXECUTION, new WorkflowEvent($context));
         $workingDefinition = $this->definitions->getDefinition($context->getWorkflowName());
 
         $this->ensureContextState($context, $workingDefinition);
 
         $this->run($context, $workingDefinition, $event);
-        $this->eventDispatcher->dispatch(WorkflowEventContraint::END_EXECUTION, new WorkflowEvent($context));
+        $this->eventDispatcher->dispatch(WorkflowEvents::END_EXECUTION, new WorkflowEvent($context));
     }
 
     /**
@@ -208,7 +208,7 @@ class Workflow
      */
     protected function moveToTargetState(ContextInterface $context, array $workingDefinition, $nextState)
     {
-        $this->eventDispatcher->dispatch(WorkflowEventContraint::BEGIN_TRANSITION, new WorkflowEvent($context));
+        $this->eventDispatcher->dispatch(WorkflowEvents::BEGIN_TRANSITION, new WorkflowEvent($context));
 
         // Run onExit actions
         if (isset($workingDefinition[$context->getCurrentState()]['onExit'])) {
@@ -218,7 +218,7 @@ class Workflow
         }
 
         $context->setCurrentState($nextState);
-        $this->eventDispatcher->dispatch(WorkflowEventContraint::STATE_CHANGED, new WorkflowEvent($context));
+        $this->eventDispatcher->dispatch(WorkflowEvents::STATE_CHANGED, new WorkflowEvent($context));
 
         // Run onEntry actions
         if (isset($workingDefinition[$context->getCurrentState()]['onEntry'])) {
@@ -227,7 +227,7 @@ class Workflow
             }
         }
 
-        $this->eventDispatcher->dispatch(WorkflowEventContraint::END_TRANSITION, new WorkflowEvent($context));
+        $this->eventDispatcher->dispatch(WorkflowEvents::END_TRANSITION, new WorkflowEvent($context));
     }
 
     /**

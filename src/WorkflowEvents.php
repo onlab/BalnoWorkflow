@@ -2,7 +2,7 @@
 
 namespace BalnoWorkflow;
 
-interface WorkflowEventContraint
+interface WorkflowEvents
 {
     const BEGIN_EXECUTION = 'begin_execution';
     const END_EXECUTION = 'end_execution';
