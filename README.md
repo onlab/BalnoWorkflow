@@ -165,7 +165,7 @@ Since PHP unfortunately does not work with threads out-of-the-box the BalnoWorkf
 
 But imagine you need to send an e-mail to your client to confirm his e-mail (you're using a slow SMTP server)
 on the `forked_workflow2` and the `forked_workflow1` will prepare an order to the product factory. Sending an
-e-mail to the client will be better then creating an order to the factory. So, in this case, to satisfy the customer,
+e-mail to the client will be better than creating an order to the factory. So, in this case, to satisfy the customer,
 will be better to execute the slowest workflow first.
 
 If you really need to execute in parallel you may setup a initial state without a default transition to pause one or
