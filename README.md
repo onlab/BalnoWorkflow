@@ -1,6 +1,6 @@
 BalnoWorkflow
 =============
-> **IMPORTANT**: This is project is still alpha. Don't use it in production until some tests are completed.
+> **IMPORTANT**: This project is still in a alpha version. Don't use it in production until some tests are completed.
 
 BalnoWorkflow is a workflow engine built for **PHP 5.5+** based on some other Workflows and State Machines that does
 not have all features in the same lib.
