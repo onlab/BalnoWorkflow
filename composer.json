@@ -1,5 +1,5 @@
 {
-    "name": "onlab/balon-state-machine",
+    "name": "onlab/balno-workflow",
     "description": "A PHP 5.5+ Workflow with parallel execution",
     "require": {
         "symfony/event-dispatcher": "~2.6",
