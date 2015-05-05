@@ -1,6 +1,6 @@
 BalnoWorkflow
 =============
-> **IMPORTANT**: This project is still in a alpha version. Don't use it in production until some tests are completed.
+> **IMPORTANT**: This project is still in an alpha version. Don't use it in production until some tests are completed.
 
 BalnoWorkflow is a workflow engine built for **PHP 5.5+** based on some other Workflows and State Machines that does
 not have all features in the same lib.
@@ -164,7 +164,7 @@ Since PHP unfortunately does not work with threads out-of-the-box the BalnoWorkf
 `forked_workflow1` then `forked_workflow2`. So I recommend to place the fast process first then the slowest.
 
 But imagine you need to send an e-mail to your client to confirm his e-mail (you're using a slow SMTP server)
-on the `forked_workflow2` and the `forked_workflow2` will prepare an order to the product factory. Sending an
+on the `forked_workflow2` and the `forked_workflow1` will prepare an order to the product factory. Sending an
 e-mail to the client will be better then creating an order to the factory. So, in this case, to satisfy the customer,
 will be better to execute the slowest workflow first.
 
