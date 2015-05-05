@@ -1,0 +1,31 @@
+{
+    "name": "onlab/balon-state-machine",
+    "description": "A PHP 5.5+ Workflow with parallel execution",
+    "require": {
+        "symfony/event-dispatcher": "~2.6",
+        "pimple/pimple": "~3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "BalnoWorkflow\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BalnoWorkflow\\IntegrationTests\\": "tests/integration/",
+            "BalnoWorkflow\\": "tests/unit/"
+        }
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "authors": [
+        {
+            "name": "Marcus Fernandez",
+            "email": "marcus@onlab.org"
+        }
+    ]
+}
