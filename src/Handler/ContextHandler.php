@@ -5,7 +5,7 @@ namespace BalnoWorkflow\Handler;
 use BalnoWorkflow\ContextInterface;
 use BalnoWorkflow\IntegrationTests\Context;
 
-class ContextHandler implements ContextHandlerInterface
+abstract class ContextHandler implements ContextHandlerInterface
 {
     /**
      * @param ContextInterface $context
@@ -14,12 +14,13 @@ class ContextHandler implements ContextHandlerInterface
      */
     public function forkContext(ContextInterface $context, $workflowName)
     {
-        $childContext = new Context($workflowName);
-        $childContext->setParentContext($context);
+        $childContext = $this->createChildContext($context, $workflowName);
         $context->addChildContext($childContext);
 
         return $childContext;
     }
+
+    abstract protected function createChildContext(ContextInterface $parentContext, $workflowName);
 
     /**
      * @param Context $context

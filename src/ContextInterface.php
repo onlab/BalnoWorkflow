@@ -10,11 +10,6 @@ interface ContextInterface
     public function getWorkflowName();
 
     /**
-     * @param ContextInterface $parentContext
-     */
-    public function setParentContext(ContextInterface $parentContext);
-
-    /**
      * @return ContextInterface
      */
     public function getParentContext();
@@ -23,11 +18,6 @@ interface ContextInterface
      * @param ContextInterface $childContext
      */
     public function addChildContext(ContextInterface $childContext);
-
-    /**
-     * @return ContextInterface[]
-     */
-    public function getChildrenContexts();
 
     /**
      * @return ContextInterface[]
@@ -48,6 +38,33 @@ interface ContextInterface
      * @param string $state
      */
     public function setCurrentState($state);
+
+    /**
+     * @param string $variableName
+     * @return string
+     */
+    public function getVariable($variableName);
+
+    /**
+     * @param string $variableName
+     * @param string $content
+     */
+    public function setVariable($variableName, $content);
+
+    /**
+     * @param string $variableName
+     */
+    public function unsetVariable($variableName);
+
+    /**
+     * @return \DateTime
+     */
+    public function getLastStatusChangedAt();
+
+    /**
+     * @return string[]
+     */
+    public function getStatusHistory();
 
     /**
      * @return bool

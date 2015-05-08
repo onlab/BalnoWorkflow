@@ -64,7 +64,7 @@ $definitionsContainer->addDefinition('sample_workflow', [
         ],
     ],
     'state_4' => [
-        onEntry' => [
+        onEntry => [
             [ action => 'pimple_service:method2("param")' ],
         ],
     ],
@@ -77,10 +77,13 @@ $definitionsContainer->addDefinition('forked_workflow2', [ ... ]);
 Given a new `Context` to execute...
 
 ```php
+use BalnoWorkflow\Workflow;
+use BalnoWorkflow\Context;
+
 $context = new Context();
 
 $workflow = new Workflow(...);
-$workflow->execute($context)
+$workflow->execute($context);
 ```
  
 ... this workflow will execute the below history:
