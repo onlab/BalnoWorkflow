@@ -3,13 +3,27 @@
 namespace BalnoWorkflow;
 
 use BalnoWorkflow\Exception\InvalidEventException;
-use BalnoWorkflow\Exception\InvalidWorkflowDefinition;
+use BalnoWorkflow\Exception\InvalidRunnableExpressionException;
+use BalnoWorkflow\Exception\InvalidWorkflowDefinitionException;
 use BalnoWorkflow\Handler\ContextHandlerInterface;
 use Pimple\Container;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Workflow
 {
+    const REGEX_DEFINITION = '
+        (?(DEFINE)
+            (?<singleQuotedString>\'[^\\\\\']*+(?:\\\\.[^\\\\\']*+)*+\')
+            (?<doubleQuotedString>"[^\\\\"]*+(?:\\\\.[^\\\\"]*+)*+")
+            (?<string>(?&singleQuotedString)|(?&doubleQuotedString))
+            (?<boolean>true|false)
+            (?<number>\d+(?:\.\d+)?)
+            (?<array>\[(?:(?&arguments)|)])
+            (?<argument>(?&string)|(?&boolean)|(?&number)|(?&array))
+            (?<arguments>\s*(?&argument)\s*,(?&arguments)|\s*(?&argument)\s*)
+        )
+    ';
+
     /**
      * @var DefinitionsContainer
      */
@@ -46,7 +60,7 @@ class Workflow
     /**
      * @param ContextInterface $context
      * @return array
-     * @throws InvalidWorkflowDefinition
+     * @throws InvalidWorkflowDefinitionException
      */
     public function getAvailableEvents(ContextInterface $context)
     {
@@ -73,14 +87,14 @@ class Workflow
             $context->setCurrentState(key($workingDefinition));
 
         } elseif (!array_key_exists($context->getCurrentState(), $workingDefinition)) {
-            throw new InvalidWorkflowDefinition();
+            throw new InvalidWorkflowDefinitionException();
         }
     }
 
     /**
      * @param ContextInterface $context
      * @param string $event
-     * @throws InvalidWorkflowDefinition
+     * @throws InvalidWorkflowDefinitionException
      */
     public function execute(ContextInterface $context, $event = null)
     {
@@ -186,16 +200,20 @@ class Workflow
      */
     protected function runAction(ContextInterface $context, $expression)
     {
-        preg_match('/^(?<service>.+?)\:(?<method>.+?)(?:\((?<parameters_bag>.+?)\))?$/', $expression, $serviceMatch);
-
-        if (isset($serviceMatch['parameters_bag'])) {
-            preg_match_all('/[,\s"]*([^,"]+)/', $serviceMatch['parameters_bag'], $parametersMatch);
-            $parameters = [ $context ] + $parametersMatch[1];
-        } else {
-            $parameters = [ $context ];
+        if (!preg_match('/' . self::REGEX_DEFINITION . '^\s*(?<service>[\w\.]+):(?<method>[\w]+)(?:\((?<method_arguments>(?&arguments)?)\))?\s*$/x', $expression, $serviceMatch)) {
+            throw new InvalidRunnableExpressionException($expression);
         }
 
-        $result = call_user_func_array([ $this->services[$serviceMatch['service']], $serviceMatch['method'] ], $parameters);
+        $parameters = [ $context ];
+        if (isset($serviceMatch['method_arguments'])) {
+            $parameters = array_merge($parameters, json_decode('[' . $serviceMatch['method_arguments'] . ']', true));
+        }
+
+        try {
+            $result = call_user_func_array([$this->services[$serviceMatch['service']], $serviceMatch['method']], $parameters);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage() . ' when running ' . $expression);
+        }
 
         return $result;
     }
