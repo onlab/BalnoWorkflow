@@ -16,4 +16,15 @@ class VarGuard
     {
         return $context->getVariable($variableName) === $content;
     }
+
+    /**
+     * @param ContextInterface $context
+     * @param string $variableName
+     * @param array $options
+     * @return bool
+     */
+    public function contentIn(ContextInterface $context, $variableName, array $options)
+    {
+        return in_array($context->getVariable($variableName), $options);
+    }
 }

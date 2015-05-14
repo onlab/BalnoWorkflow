@@ -3,7 +3,8 @@
 namespace BalnoWorkflow\Guard;
 
 use BalnoWorkflow\ContextInterface;
-use BalnoWorkflow\Exception\InvalidGuardConfiguration;
+use BalnoWorkflow\Exception\InvalidHistoryGuardConditionException;
+use BalnoWorkflow\Exception\InvalidRunnableExpressionException;
 
 class HistoryGuard
 {
@@ -14,7 +15,7 @@ class HistoryGuard
      * @param $condition
      * @param $countEntries
      * @return bool
-     * @throws InvalidGuardConfiguration
+     * @throws InvalidRunnableExpressionException
      */
     public function statusEntries(ContextInterface $context, $condition, $countEntries)
     {
@@ -26,7 +27,7 @@ class HistoryGuard
      * @param $condition
      * @param $countEntries
      * @return bool
-     * @throws InvalidGuardConfiguration
+     * @throws InvalidRunnableExpressionException
      */
     public function statusReentries(ContextInterface $context, $condition, $countEntries)
     {
@@ -38,7 +39,7 @@ class HistoryGuard
      * @param mixed $leftValue
      * @param mixed $rightValue
      * @return bool
-     * @throws InvalidGuardConfiguration
+     * @throws InvalidRunnableExpressionException
      */
     protected function processCondition($condition, $leftValue, $rightValue)
     {
@@ -57,7 +58,7 @@ class HistoryGuard
             case '!=':
                 return $leftValue != $rightValue;
             default:
-                throw new InvalidGuardConfiguration('StatusHistoryGuard does not recognize the condition "' . $condition . '"');
+                throw new InvalidHistoryGuardConditionException($condition);
         }
     }
 }
