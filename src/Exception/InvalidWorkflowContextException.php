@@ -2,7 +2,7 @@
 
 namespace BalnoWorkflow\Exception;
 
-class InvalidStateMachineContext extends \RuntimeException
+class InvalidStateMachineContextException extends \RuntimeException
 {
     public function __construct()
     {
