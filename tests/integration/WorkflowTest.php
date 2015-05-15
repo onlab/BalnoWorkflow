@@ -2,7 +2,6 @@
 
 namespace BalnoWorkflow\IntegrationTests;
 
-use BalnoWorkflow\DefinitionsContainer;
 use BalnoWorkflow\Handler\ContextHandler;
 use BalnoWorkflow\IntegrationTests\Interfaces\FraudFacade;
 use BalnoWorkflow\IntegrationTests\Interfaces\GuardFraud;
@@ -14,7 +13,6 @@ use BalnoWorkflow\IntegrationTests\Interfaces\SacFacade;
 use BalnoWorkflow\IntegrationTests\Interfaces\StockFacade;
 use BalnoWorkflow\IntegrationTests\Interfaces\TransitionEvents;
 use BalnoWorkflow\Workflow;
-use Pimple\Container;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 const targets = 'targets';
@@ -29,7 +27,7 @@ const parallel = 'parallel';
 class WorkflowTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var array
+     * @var \ArrayAccess
      */
     protected $definitionsContainer;
 
@@ -40,11 +38,11 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->definitionsContainer = new DefinitionsContainer();
-        $this->definitionsContainer->addDefinition('order_workflow', $this->getOrderWorkflow());
-        $this->definitionsContainer->addDefinition('invoice_workflow', $this->getParallelWorkflowNonStop());
-        $this->definitionsContainer->addDefinition('warehouse_workflow', $this->getParallelWorkflowRequireEvent());
-        $this->definitionsContainer->addDefinition('logistics_workflow', $this->getParallelWorkflowRequireEvent());
+        $this->definitionsContainer = new \ArrayObject();
+        $this->definitionsContainer['order_workflow'] = $this->getOrderWorkflow();
+        $this->definitionsContainer['invoice_workflow'] = $this->getParallelWorkflowNonStop();
+        $this->definitionsContainer['warehouse_workflow'] = $this->getParallelWorkflowRequireEvent();
+        $this->definitionsContainer['logistics_workflow'] = $this->getParallelWorkflowRequireEvent();
     }
 
     protected function getOrderWorkflow()
@@ -170,7 +168,7 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
 
     public function testOutOfStockFlow()
     {
-        $services = new Container();
+        $services = new \ArrayObject();
         $eventDispatcher = new EventDispatcher();
         $context = new Context('order_workflow');
         $contextHandler = new ContextHandler();
@@ -210,7 +208,7 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
 
     public function testSuccessFlow()
     {
-        $services = new Container();
+        $services = new \ArrayObject();
         $eventDispatcher = new EventDispatcher();
         $context = new Context('order_workflow');
         $contextHandler = new ContextHandler();

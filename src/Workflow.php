@@ -6,7 +6,6 @@ use BalnoWorkflow\Exception\InvalidEventException;
 use BalnoWorkflow\Exception\InvalidRunnableExpressionException;
 use BalnoWorkflow\Exception\InvalidWorkflowDefinitionException;
 use BalnoWorkflow\Handler\ContextHandlerInterface;
-use Pimple\Container;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Workflow
@@ -25,9 +24,19 @@ class Workflow
     ';
 
     /**
-     * @var DefinitionsContainer
+     * @var \ArrayAccess
      */
     protected $definitions;
+
+    /**
+     * @var \ArrayAccess
+     */
+    protected $actions;
+
+    /**
+     * @var \ArrayAccess
+     */
+    protected $guards;
 
     /**
      * @var EventDispatcherInterface
@@ -39,20 +48,17 @@ class Workflow
      */
     protected $contextHandler;
 
-    /**
-     * @var Container
-     */
-    protected $services;
-
     public function __construct(
-        DefinitionsContainer $definitions,
-        Container $services,
+        \ArrayAccess $definitions,
+        \ArrayAccess $guards,
+        \ArrayAccess $actions,
         EventDispatcherInterface $eventDispatcher,
         ContextHandlerInterface $contextHandler
     )
     {
         $this->definitions = $definitions;
-        $this->services = $services;
+        $this->guards = $guards;
+        $this->actions = $actions;
         $this->eventDispatcher = $eventDispatcher;
         $this->contextHandler = $contextHandler;
     }
@@ -64,7 +70,7 @@ class Workflow
      */
     public function getAvailableEvents(ContextInterface $context)
     {
-        $workingDefinition = $this->definitions->getDefinition($context->getWorkflowName());
+        $workingDefinition = $this->definitions[$context->getWorkflowName()];
         $this->ensureContextState($context, $workingDefinition);
 
         $currentStateProperties = $workingDefinition[$context->getCurrentState()];
@@ -99,7 +105,7 @@ class Workflow
     public function execute(ContextInterface $context, $event = null)
     {
         $this->eventDispatcher->dispatch(WorkflowEvents::BEGIN_EXECUTION, new WorkflowEvent($context));
-        $workingDefinition = $this->definitions->getDefinition($context->getWorkflowName());
+        $workingDefinition = $this->definitions[$context->getWorkflowName()];
 
         $this->ensureContextState($context, $workingDefinition);
 
@@ -185,7 +191,7 @@ class Workflow
         }
 
         foreach ($triggeredEventTransitions + $defaultTransitions as $stateTransition) {
-            if (!isset($stateTransition['transition']['guard']) || $this->runAction($context, $stateTransition['transition']['guard'])) {
+            if (!isset($stateTransition['transition']['guard']) || $this->runAction($context, $this->guards, $stateTransition['transition']['guard'])) {
                 return $stateTransition['targetState'];
             }
         }
@@ -198,7 +204,7 @@ class Workflow
      * @param string $expression
      * @return mixed
      */
-    protected function runAction(ContextInterface $context, $expression)
+    protected function runAction(ContextInterface $context, \ArrayAccess $container, $expression)
     {
         if (!preg_match('/' . self::REGEX_DEFINITION . '^\s*(?<service>[\w\.]+):(?<method>[\w]+)(?:\((?<method_arguments>(?&arguments)?)\))?\s*$/x', $expression, $serviceMatch)) {
             throw new InvalidRunnableExpressionException($expression);
@@ -210,7 +216,7 @@ class Workflow
         }
 
         try {
-            $result = call_user_func_array([$this->services[$serviceMatch['service']], $serviceMatch['method']], $parameters);
+            $result = call_user_func_array([$container[$serviceMatch['service']], $serviceMatch['method']], $parameters);
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage() . ' when running ' . $expression);
         }
@@ -231,7 +237,7 @@ class Workflow
         // Run onExit actions
         if (isset($workingDefinition[$context->getCurrentState()]['onExit'])) {
             foreach ($workingDefinition[$context->getCurrentState()]['onExit'] as $onExitAction) {
-                $this->runAction($context, $onExitAction['action']);
+                $this->runAction($context, $this->actions, $onExitAction['action']);
             }
         }
 
@@ -241,7 +247,7 @@ class Workflow
         // Run onEntry actions
         if (isset($workingDefinition[$context->getCurrentState()]['onEntry'])) {
             foreach ($workingDefinition[$context->getCurrentState()]['onEntry'] as $onEntryAction) {
-                $this->runAction($context, $onEntryAction['action']);
+                $this->runAction($context, $this->actions, $onEntryAction['action']);
             }
         }
 
