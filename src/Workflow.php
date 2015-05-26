@@ -104,11 +104,11 @@ class Workflow
      */
     public function execute(ContextInterface $context, $event = null)
     {
-        $this->eventDispatcher->dispatch(WorkflowEvents::BEGIN_EXECUTION, new WorkflowEvent($context));
         $workingDefinition = $this->definitions[$context->getWorkflowName()];
 
         $this->ensureContextState($context, $workingDefinition);
 
+        $this->eventDispatcher->dispatch(WorkflowEvents::BEGIN_EXECUTION, new WorkflowEvent($context));
         $this->run($context, $workingDefinition, $event);
         $this->eventDispatcher->dispatch(WorkflowEvents::END_EXECUTION, new WorkflowEvent($context));
     }
