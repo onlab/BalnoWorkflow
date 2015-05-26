@@ -15,4 +15,12 @@ class WorkflowEvent extends Event
     {
         $this->context = $context;
     }
+
+    /**
+     * @return ContextInterface
+     */
+    public function getContext()
+    {
+        return $this->context;
+    }
 }
