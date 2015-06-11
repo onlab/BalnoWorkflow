@@ -91,6 +91,7 @@ class Workflow
         if ($context->getCurrentState() === null) {
             reset($workingDefinition);
             $context->setCurrentState(key($workingDefinition));
+            $this->runStateActions($context, $workingDefinition, 'onEntry');
 
         } elseif (!array_key_exists($context->getCurrentState(), $workingDefinition)) {
             throw new InvalidWorkflowDefinitionException();
@@ -125,8 +126,21 @@ class Workflow
         do {
             // Execute any parallel executions available in this context
             if ($context->hasActiveChildrenContexts()) {
+                $exception = null;
                 foreach ($context->getActiveChildrenContexts() as $childContext) {
-                    $this->execute($childContext);
+                    try {
+                        $this->execute($childContext);
+
+                    } catch (\Exception $e) {
+                        // store the first workflow exception to throw away
+                        if (!$exception) {
+                            $exception = $e;
+                        }
+                    }
+                }
+
+                if ($exception) {
+                    throw $exception;
                 }
             }
 
@@ -191,7 +205,7 @@ class Workflow
         }
 
         foreach ($triggeredEventTransitions + $defaultTransitions as $stateTransition) {
-            if (!isset($stateTransition['transition']['guard']) || $this->runAction($context, $this->guards, $stateTransition['transition']['guard'])) {
+            if (!isset($stateTransition['transition']['guard']) || $this->runCommand($context, $this->guards, $stateTransition['transition']['guard'])) {
                 return $stateTransition['targetState'];
             }
         }
@@ -204,7 +218,7 @@ class Workflow
      * @param string $expression
      * @return mixed
      */
-    protected function runAction(ContextInterface $context, \ArrayAccess $container, $expression)
+    protected function runCommand(ContextInterface $context, \ArrayAccess $container, $expression)
     {
         if (!preg_match('/' . self::REGEX_DEFINITION . '^\s*(?<service>[\w\.]+):(?<method>[\w]+)(?:\((?<method_arguments>(?&arguments)?)\))?\s*$/x', $expression, $serviceMatch)) {
             throw new InvalidRunnableExpressionException($expression);
@@ -234,24 +248,30 @@ class Workflow
     {
         $this->eventDispatcher->dispatch(WorkflowEvents::BEGIN_TRANSITION, new WorkflowEvent($context));
 
-        // Run onExit actions
-        if (isset($workingDefinition[$context->getCurrentState()]['onExit'])) {
-            foreach ($workingDefinition[$context->getCurrentState()]['onExit'] as $onExitAction) {
-                $this->runAction($context, $this->actions, $onExitAction['action']);
-            }
-        }
-
+        $this->runStateActions($context, $workingDefinition, 'onExit');
         $context->setCurrentState($nextState);
+
         $this->eventDispatcher->dispatch(WorkflowEvents::STATE_CHANGED, new WorkflowEvent($context));
 
-        // Run onEntry actions
-        if (isset($workingDefinition[$context->getCurrentState()]['onEntry'])) {
-            foreach ($workingDefinition[$context->getCurrentState()]['onEntry'] as $onEntryAction) {
-                $this->runAction($context, $this->actions, $onEntryAction['action']);
-            }
-        }
+        $this->runStateActions($context, $workingDefinition, 'onEntry');
 
         $this->eventDispatcher->dispatch(WorkflowEvents::END_TRANSITION, new WorkflowEvent($context));
+    }
+
+    /**
+     * @param ContextInterface $context
+     * @param array $workingDefinition
+     * @param string $stateActionType
+     * @throws InvalidRunnableExpressionException
+     * @throws \Exception
+     */
+    protected function runStateActions(ContextInterface $context, array $workingDefinition, $stateActionType)
+    {
+        if (isset($workingDefinition[$context->getCurrentState()][$stateActionType])) {
+            foreach ($workingDefinition[$context->getCurrentState()][$stateActionType] as $stateTypeAction) {
+                $this->runCommand($context, $this->actions, $stateTypeAction['action']);
+            }
+        }
     }
 
     /**
