@@ -121,8 +121,6 @@ class Workflow
      */
     protected function run(ContextInterface $context, array $workingDefinition, $event)
     {
-        $currentStateProperties = $workingDefinition[$context->getCurrentState()];
-
         do {
             // Execute any parallel executions available in this context
             if ($context->hasActiveChildrenContexts()) {
@@ -143,6 +141,8 @@ class Workflow
                     throw $exception;
                 }
             }
+
+            $currentStateProperties = $workingDefinition[$context->getCurrentState()];
 
             // Pause execution if any child is still running
             if ($context->hasActiveChildrenContexts()) {
