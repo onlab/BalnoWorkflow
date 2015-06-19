@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.1/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         syntaxCheck="true"
+         stopOnFailure="false"
+         bootstrap="./vendor/autoload.php">
+    <testsuites>
+        <testsuite name="Balno Workflow Test Suite">
+            <directory>./tests/unit</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./src</directory>
+            <exclude>
+                <directory suffix="Interface.php">./src</directory>
+                <directory suffix="Exception.php">./src</directory>
+            </exclude>
+        </whitelist>
+        <blacklist>
+            <directory>./vendor</directory>
+        </blacklist>
+    </filter>
+</phpunit>

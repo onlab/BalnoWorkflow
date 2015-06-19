@@ -1,8 +1,9 @@
 <?php
 
-namespace BalnoWorkflow\Guard;
+namespace BalnoWorkflow\Guard\UnitTest;
 
 use BalnoWorkflow\ContextInterface;
+use BalnoWorkflow\Guard\HistoryGuard;
 
 class HistoryGuardTest extends \PHPUnit_Framework_TestCase
 {
