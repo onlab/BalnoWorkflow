@@ -29,10 +29,19 @@ class GraphvizWorkflowRenderer
      */
     public function renderWorkflowToStream($workflowName)
     {
+        $this->runGraphviz($this->getWorkflowDotRepresentation($workflowName));
+    }
+
+    /**
+     * @param $workflowName
+     * @return string
+     */
+    public function getWorkflowDotRepresentation($workflowName)
+    {
+        reset($this->definitions[$workflowName]);
         $digraph = 'digraph G { compound=true;'. $this->processWorkflowConnections($workflowName) . '}';
 
-        reset($this->definitions[$workflowName]);
-        $this->runGraphviz($digraph);
+        return $digraph;
     }
 
     /**
