@@ -11,8 +11,8 @@ class TimerGuardTest extends \PHPUnit_Framework_TestCase
     {
         $context = $this->prophesize(ContextInterface::class)
             ->getCurrentState()->willReturn('test')->getObjectProphecy()
-            ->getLastStatusChangedAt()->willReturn(new \DateTime("-3 min"))->getObjectProphecy()
-            ->getStatusHistory()->willReturn([
+            ->getLastStateChangedAt()->willReturn(new \DateTime("-3 min"))->getObjectProphecy()
+            ->getStateHistory()->willReturn([
                 'test'
             ])->getObjectProphecy()
             ->reveal();
@@ -32,8 +32,8 @@ class TimerGuardTest extends \PHPUnit_Framework_TestCase
     {
         $context = $this->prophesize(ContextInterface::class)
             ->getCurrentState()->willReturn('test')->getObjectProphecy()
-            ->getLastStatusChangedAt()->willReturn(new \DateTime("-90 min"))->getObjectProphecy()
-            ->getStatusHistory()->willReturn([
+            ->getLastStateChangedAt()->willReturn(new \DateTime("-90 min"))->getObjectProphecy()
+            ->getStateHistory()->willReturn([
                 'test', 'test', 'test'
             ])->getObjectProphecy()
             ->reveal();

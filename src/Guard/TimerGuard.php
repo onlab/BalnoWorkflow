@@ -20,7 +20,7 @@ class TimerGuard
             $timeoutIntervalSpec = func_get_arg(min(func_num_args() - 1, $timerToUse));
         }
 
-        $timeoutExpiresAt = clone $context->getLastStatusChangedAt();
+        $timeoutExpiresAt = clone $context->getLastStateChangedAt();
         $timeoutExpiresAt->modify($timeoutIntervalSpec);
 
         $timezone = $timeoutExpiresAt->getTimezone();

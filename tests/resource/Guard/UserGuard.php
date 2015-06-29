@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Guard;
 
 use BalnoWorkflow\ContextInterface;
 
-interface GuardUser
+interface UserGuard
 {
     public function isAllowedToExecute(ContextInterface $context);
 }

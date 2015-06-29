@@ -2,71 +2,62 @@
 
 namespace BalnoWorkflow\IntegrationTests;
 
-use BalnoWorkflow\Handler\ContextHandler;
-use BalnoWorkflow\IntegrationTests\Interfaces\FraudFacade;
-use BalnoWorkflow\IntegrationTests\Interfaces\GuardFraud;
-use BalnoWorkflow\IntegrationTests\Interfaces\GuardPayment;
-use BalnoWorkflow\IntegrationTests\Interfaces\GuardStock;
-use BalnoWorkflow\IntegrationTests\Interfaces\OrderFacade;
-use BalnoWorkflow\IntegrationTests\Interfaces\PaymentFacade;
-use BalnoWorkflow\IntegrationTests\Interfaces\SacFacade;
-use BalnoWorkflow\IntegrationTests\Interfaces\StockFacade;
-use BalnoWorkflow\IntegrationTests\Interfaces\TransitionEvents;
+use BalnoWorkflow\TestResource\Action\FraudAction;
+use BalnoWorkflow\TestResource\Action\InvoiceAction;
+use BalnoWorkflow\TestResource\Action\OrderAction;
+use BalnoWorkflow\TestResource\Action\PaymentAction;
+use BalnoWorkflow\TestResource\Action\SacAction;
+use BalnoWorkflow\TestResource\Action\ShippingAction;
+use BalnoWorkflow\TestResource\Action\StockAction;
+use BalnoWorkflow\TestResource\Context;
+use BalnoWorkflow\TestResource\Definitions\OrderWorkflowDefinition;
+use BalnoWorkflow\TestResource\Guard\FraudGuard;
+use BalnoWorkflow\TestResource\Guard\InvoiceGuard;
+use BalnoWorkflow\TestResource\Guard\PaymentGuard;
+use BalnoWorkflow\TestResource\Guard\StockGuard;
+use BalnoWorkflow\TestResource\Handler\ContextHandler;
+use BalnoWorkflow\TestResource\TransitionEvents;
+use BalnoWorkflow\TestResource\WorkflowDefinitionContainer;
 use BalnoWorkflow\Workflow;
+use Prophecy\Argument;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-
-const targets = 'targets';
-const guard = 'guard';
-const action = 'action';
-const event = 'event';
-const type = 'type';
-const onEntry = 'onEntry';
-const onExit = 'onExit';
-const parallel = 'parallel';
 
 class WorkflowTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @var \ArrayAccess
-     */
-    protected $definitionsContainer;
-
-    /**
-     * @var array
-     */
-    protected $workflowHistory;
-
-
     public function testOutOfStockFlow()
     {
-        $services = new \ArrayObject();
         $eventDispatcher = new EventDispatcher();
-        $context = new Context('order_workflow');
+
+        $actions = new \ArrayObject();
+        $guards = new \ArrayObject();
+
+        $context = new Context(OrderWorkflowDefinition::NAME);
         $contextHandler = new ContextHandler();
 
-        $services['test.guard.stock'] = $this->prophesize(GuardStock::class)
+        $guards['stock'] = $this->prophesize(StockGuard::class)
             ->isStocked($context)->willReturn(false)->getObjectProphecy()
             ->reveal();
 
-        $services['stock.facade'] = $this->prophesize(StockFacade::class)
-            ->checkOrderAvailability($context)->getObjectProphecy()
-            ->reveal();
-
-        $services['sac.facade'] = $this->prophesize(SacFacade::class)
-            ->notifyInvalidOrder($context)->getObjectProphecy()
-            ->reveal();
-
-        $services['order.facade'] = $this->prophesize(OrderFacade::class)
-            ->notifyInvalidOrder($context)->getObjectProphecy()
-            ->reveal();
-
-        $services['test.guard.payment'] = $this->prophesize(GuardPayment::class)
+        $guards['payment'] = $this->prophesize(PaymentGuard::class)
             ->isAuthorized($context)->willreturn(true)->getObjectProphecy()
             ->reveal();
 
+        $actions['stock'] = $this->prophesize(StockAction::class)
+            ->checkOrderAvailability($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['sac'] = $this->prophesize(SacAction::class)
+            ->notifyInvalidOrder($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['order'] = $this->prophesize(OrderAction::class)
+            ->notifyInvalidOrder($context)->getObjectProphecy()
+            ->reveal();
+
         $workflow = new Workflow(
-            $this->definitionsContainer,
-            $services,
+            WorkflowDefinitionContainer::getTestDefinitions(),
+            $guards,
+            $actions,
             $eventDispatcher,
             $contextHandler
         );
@@ -79,46 +70,61 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
 
     public function testSuccessFlow()
     {
-        $services = new \ArrayObject();
         $eventDispatcher = new EventDispatcher();
-        $context = new Context('order_workflow');
+        $actions = new \ArrayObject();
+        $guards = new \ArrayObject();
+
+        $context = new Context(OrderWorkflowDefinition::NAME);
         $contextHandler = new ContextHandler();
 
-        $services['stock.facade'] = $this->prophesize(StockFacade::class)
+        $actions['stock'] = $this->prophesize(StockAction::class)
             ->checkOrderAvailability($context)->getObjectProphecy()
             ->reserveOrderItems($context)->getObjectProphecy()
             ->reveal();
 
-        $services['test.guard.stock'] = $this->prophesize(GuardStock::class)
-            ->isStocked($context)->willReturn(true)->getObjectProphecy()
-            ->reveal();
-
-        $services['payment.facade'] = $this->prophesize(PaymentFacade::class)
+        $actions['payment'] = $this->prophesize(PaymentAction::class)
             ->authorizeOrderPayment($context)->getObjectProphecy()
             ->capturePayment($context)->getObjectProphecy()
             ->reveal();
 
-        $services['test.guard.payment'] = $this->prophesize(GuardPayment::class)
-            ->isAuthorized($context)->willReturn(true)->getObjectProphecy()
-            ->reveal();
-
-        $services['fraud.facade'] = $this->prophesize(FraudFacade::class)
+        $actions['fraud'] = $this->prophesize(FraudAction::class)
             ->requestFraudAnalysis($context)->getObjectProphecy()
             ->reveal();
 
-        $services['test.guard.fraud'] = $this->prophesize(GuardFraud::class)
+        $actions['order'] = $this->prophesize(OrderAction::class)
+            ->notifyOrderSent($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['invoice'] = $this->prophesize(InvoiceAction::class)
+            ->generateInvoice($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['shipping'] = $this->prophesize(ShippingAction::class)
+            ->quote(Argument::type(Context::class))->getObjectProphecy()
+            ->reveal();
+
+        $guards['stock'] = $this->prophesize(StockGuard::class)
+            ->isStocked($context)->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $guards['payment'] = $this->prophesize(PaymentGuard::class)
+            ->isAuthorized($context)->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $guards['fraud'] = $this->prophesize(FraudGuard::class)
             ->requestSent($context)->willReturn(true)->getObjectProphecy()
             ->isFraud($context)->willReturn(false)->getObjectProphecy()
             ->isNotFraud($context)->willReturn(true)->getObjectProphecy()
             ->reveal();
 
-        $services['order.facade'] = $this->prophesize(OrderFacade::class)
-            ->notifyOrderSent($context)->getObjectProphecy()
+        $guards['invoice'] = $this->prophesize(InvoiceGuard::class)
+            ->invoiceCreated(Argument::type(Context::class))->willReturn(true)->getObjectProphecy()
             ->reveal();
 
         $workflow = new Workflow(
-            $this->definitionsContainer,
-            $services,
+            WorkflowDefinitionContainer::getTestDefinitions(),
+            $guards,
+            $actions,
             $eventDispatcher,
             $contextHandler
         );
@@ -129,59 +135,52 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($context->hasFinished());
 
         $childrenContexts = $context->getChildrenContexts();
-        $this->assertEquals('state2', $childrenContexts[0]->getCurrentState());
+        $this->assertEquals('invoice_generated', $childrenContexts[0]->getCurrentState());
         $this->assertTrue($childrenContexts[0]->hasFinished());
 
-        $this->assertEquals('state1', $childrenContexts[1]->getCurrentState());
+        $this->assertEquals('waiting_order_packaging', $childrenContexts[1]->getCurrentState());
         $this->assertFalse($childrenContexts[1]->hasFinished());
 
-        $this->assertEquals('state1', $childrenContexts[2]->getCurrentState());
+        $this->assertEquals('waiting_carrier', $childrenContexts[2]->getCurrentState());
         $this->assertFalse($childrenContexts[2]->hasFinished());
 
-        $this->assertEmpty($workflow->getAvailableEvents($context));
-        $this->assertEmpty($workflow->getAvailableEvents($childrenContexts[0]));
-        $this->assertEquals([ TransitionEvents::ORDER_PACKAGED ], $workflow->getAvailableEvents($childrenContexts[1]));
-        $this->assertEquals([ TransitionEvents::ORDER_PACKAGED ], $workflow->getAvailableEvents($childrenContexts[2]));
+        $this->assertEquals(['cancel_order', 'order_packaged', 'order_sent'], array_values($workflow->getAvailableEvents($context)));
 
         // Resume child warehouse_workflow
-        $workflow->execute($childrenContexts[2], TransitionEvents::ORDER_PACKAGED);
+        $workflow->execute($context, TransitionEvents::ORDER_PACKAGED);
 
         $this->assertEquals('package_process', $context->getCurrentState());
         $this->assertFalse($context->hasFinished());
 
-        $this->assertEquals('state1', $childrenContexts[1]->getCurrentState());
-        $this->assertFalse($childrenContexts[1]->hasFinished());
-
-        $this->assertEquals('state2', $childrenContexts[2]->getCurrentState());
-        $this->assertTrue($childrenContexts[2]->hasFinished());
-
-        $this->assertEmpty($workflow->getAvailableEvents($childrenContexts[2]));
-        $this->assertEquals([ TransitionEvents::ORDER_PACKAGED ], $workflow->getAvailableEvents($childrenContexts[1]));
-
-        // Resume child logistics_workflow
-        $workflow->execute($childrenContexts[1], TransitionEvents::ORDER_PACKAGED);
-
-        $this->assertEquals('state2', $childrenContexts[1]->getCurrentState());
+        $this->assertEquals('order_packaged', $childrenContexts[1]->getCurrentState());
         $this->assertTrue($childrenContexts[1]->hasFinished());
 
-        $this->assertEquals('sent', $context->getCurrentState());
-        $this->assertTrue($context->hasFinished());
+        $this->assertEquals('waiting_carrier', $childrenContexts[2]->getCurrentState());
+        $this->assertFalse($childrenContexts[2]->hasFinished());
+
+        $this->assertEquals(['cancel_order', 'order_sent'], array_values($workflow->getAvailableEvents($context)));
+
+        // Resume child logistics_workflow
+        $workflow->execute($context, TransitionEvents::ORDER_SENT);
+
+        $this->assertEquals('order_sent', $childrenContexts[2]->getCurrentState());
+        $this->assertTrue($childrenContexts[2]->hasFinished());
 
         $this->assertEquals([
             'new', 'check_stock_availability', 'authorize_payment', 'request_fraud_check',
             'waiting_fraud_check_response', 'capture_payment', 'package_process', 'sent'
-        ], $context->stateHistory);
+        ], $context->getStateHistory());
 
         $this->assertEquals([
-            'state1', 'state2'
-        ], $childrenContexts[0]->stateHistory);
+            'generating_invoice', 'waiting_invoice_generation', 'invoice_generated'
+        ], $childrenContexts[0]->getStateHistory());
 
         $this->assertEquals([
-            'state1', 'state2'
-        ], $childrenContexts[1]->stateHistory);
+            'waiting_order_packaging', 'order_packaged'
+        ], $childrenContexts[1]->getStateHistory());
 
         $this->assertEquals([
-            'state1', 'state2'
-        ], $childrenContexts[2]->stateHistory);
+            'quoting_shipment', 'waiting_carrier', 'order_sent'
+        ], $childrenContexts[2]->getStateHistory());
     }
 }

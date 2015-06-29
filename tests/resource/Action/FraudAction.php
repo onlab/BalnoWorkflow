@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Action;
 
 use BalnoWorkflow\ContextInterface;
 
-interface FraudFacade
+interface FraudAction
 {
     public function requestFraudAnalysis(ContextInterface $context);
 }

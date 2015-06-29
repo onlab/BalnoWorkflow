@@ -3,7 +3,7 @@
 namespace BalnoWorkflow\UnitTest;
 
 use BalnoWorkflow\GraphvizWorkflowRenderer;
-use BalnoWorkflow\UnitTest\Resources\WorkflowDefinitionContainer;
+use BalnoWorkflow\TestResource\WorkflowDefinitionContainer;
 
 class GraphvizWorkflowRendererTest extends \PHPUnit_Framework_TestCase
 {

@@ -16,7 +16,7 @@ class HistoryGuardTest extends \PHPUnit_Framework_TestCase
     {
         $this->context = $this->prophesize(ContextInterface::class)
             ->getCurrentState()->willReturn('test')->getObjectProphecy()
-            ->getStatusHistory()->willReturn([
+            ->getStateHistory()->willReturn([
                 'out', 'test', 'out', 'test', 'test'
             ])->getObjectProphecy()
             ->reveal();
@@ -72,7 +72,7 @@ class HistoryGuardTest extends \PHPUnit_Framework_TestCase
 
         $context = $this->prophesize(ContextInterface::class)
             ->getCurrentState()->willReturn('test')->getObjectProphecy()
-            ->getStatusHistory()->willReturn([
+            ->getStateHistory()->willReturn([
                 'out', 'test', 'out', 'test', 'test', 'test'
             ])->getObjectProphecy()
             ->reveal();
@@ -83,7 +83,7 @@ class HistoryGuardTest extends \PHPUnit_Framework_TestCase
 
         $context = $this->prophesize(ContextInterface::class)
             ->getCurrentState()->willReturn('test')->getObjectProphecy()
-            ->getStatusHistory()->willReturn([
+            ->getStateHistory()->willReturn([
                 'out', 'test', 'out', 'test'
             ])->getObjectProphecy()
             ->reveal();

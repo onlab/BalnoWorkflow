@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Action;
 
 use BalnoWorkflow\ContextInterface;
 
-interface PaymentFacade
+interface PaymentAction
 {
     public function authorizeOrderPayment(ContextInterface $context);
     public function capturePayment(ContextInterface $context);

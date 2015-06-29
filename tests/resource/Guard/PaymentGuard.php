@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Guard;
 
 use BalnoWorkflow\ContextInterface;
 
-interface GuardPayment
+interface PaymentGuard
 {
     public function isAuthorized(ContextInterface $context);
 }

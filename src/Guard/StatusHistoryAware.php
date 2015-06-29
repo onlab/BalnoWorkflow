@@ -12,7 +12,7 @@ trait StatusHistoryAware
      */
     protected function getStatusSets(ContextInterface $context, $onlyContinuous = true)
     {
-        $statusHistory = $context->getStatusHistory();
+        $statusHistory = $context->getStateHistory();
         $historySize = count($statusHistory);
         $count = 1;
 

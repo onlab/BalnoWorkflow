@@ -83,7 +83,11 @@ class Workflow
             }
         }
 
-        return $availableEvents;
+        foreach ($context->getActiveChildrenContexts() as $childContext) {
+            $availableEvents = array_merge($availableEvents, $this->getAvailableEvents($childContext));
+        }
+
+        return array_unique($availableEvents);
     }
 
     protected function ensureContextState(ContextInterface $context, array $workingDefinition)
@@ -127,7 +131,7 @@ class Workflow
                 $exception = null;
                 foreach ($context->getActiveChildrenContexts() as $childContext) {
                     try {
-                        $this->execute($childContext);
+                        $this->execute($childContext, $event);
 
                     } catch (\Exception $e) {
                         // store the first workflow exception to throw away
@@ -198,10 +202,6 @@ class Workflow
                     'transition' => $transition
                 ];
             }
-        }
-
-        if ($event !== null && empty($triggeredEventTransitions)) {
-            throw new InvalidEventException($event);
         }
 
         foreach ($triggeredEventTransitions + $defaultTransitions as $stateTransition) {

@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Guard;
 
 use BalnoWorkflow\ContextInterface;
 
-interface GuardFraud
+interface FraudGuard
 {
     public function requestSent(ContextInterface $context);
     public function isFraud(ContextInterface $context);

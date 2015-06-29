@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Action;
 
 use BalnoWorkflow\ContextInterface;
 
-interface SacFacade
+interface SacAction
 {
     public function notifyInvalidOrder(ContextInterface $context);
     public function notifyFraudPending(ContextInterface $context);

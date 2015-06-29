@@ -59,12 +59,12 @@ interface ContextInterface
     /**
      * @return \DateTime
      */
-    public function getLastStatusChangedAt();
+    public function getLastStateChangedAt();
 
     /**
      * @return string[]
      */
-    public function getStatusHistory();
+    public function getStateHistory();
 
     /**
      * @return bool

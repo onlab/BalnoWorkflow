@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Action;
 
 use BalnoWorkflow\ContextInterface;
 
-interface OrderFacade
+interface OrderAction
 {
     public function notifyInvalidOrder(ContextInterface $context);
     public function notifyOrderSent(ContextInterface $context);

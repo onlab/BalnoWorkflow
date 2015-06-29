@@ -3,14 +3,13 @@
 namespace BalnoWorkflow\Handler;
 
 use BalnoWorkflow\ContextInterface;
-use BalnoWorkflow\IntegrationTests\Context;
 
 abstract class ContextHandler implements ContextHandlerInterface
 {
     /**
      * @param ContextInterface $context
      * @param $workflowName
-     * @return Context
+     * @return ContextInterface
      */
     public function forkContext(ContextInterface $context, $workflowName)
     {
@@ -20,10 +19,15 @@ abstract class ContextHandler implements ContextHandlerInterface
         return $childContext;
     }
 
+    /**
+     * @param ContextInterface $parentContext
+     * @param string $workflowName
+     * @return ContextInterface
+     */
     abstract protected function createChildContext(ContextInterface $parentContext, $workflowName);
 
     /**
-     * @param Context $context
+     * @param ContextInterface $context
      */
     public function finish(ContextInterface $context)
     {

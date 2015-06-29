@@ -1,10 +1,10 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests\Interfaces;
+namespace BalnoWorkflow\TestResource\Guard;
 
 use BalnoWorkflow\ContextInterface;
 
-interface GuardStock
+interface StockGuard
 {
     public function isStocked(ContextInterface $context);
 }

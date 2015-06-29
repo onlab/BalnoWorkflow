@@ -22,7 +22,7 @@ class Context implements ContextInterface
     /**
      * @var bool
      */
-    protected $hasFinished;
+    protected $hasFinished = false;
 
     /**
      * @var ContextInterface
@@ -30,13 +30,28 @@ class Context implements ContextInterface
     protected $parentContext;
 
     /**
-     * @param string $workflowName
-     * @param bool $hasFinished
+     * @var \DateTime
      */
-    public function __construct($workflowName, $hasFinished = false)
+    protected $lastStateChangedAt;
+
+    /**
+     * @var string[]
+     */
+    protected $variables = [];
+
+    /**
+     * @var string[]
+     */
+    protected $stateHistory = [];
+
+    /**
+     * @param $workflowName
+     * @param ContextInterface $parentContext
+     */
+    public function __construct($workflowName, ContextInterface $parentContext = null)
     {
         $this->workflowName = $workflowName;
-        $this->hasFinished = $hasFinished;
+        $this->parentContext = $parentContext;
     }
 
     /**
@@ -45,14 +60,6 @@ class Context implements ContextInterface
     public function getWorkflowName()
     {
         return $this->workflowName;
-    }
-
-    /**
-     * @param ContextInterface $parentContext
-     */
-    public function setParentContext(ContextInterface $parentContext)
-    {
-        $this->parentContext = $parentContext;
     }
 
     /**
@@ -116,7 +123,54 @@ class Context implements ContextInterface
      */
     public function setCurrentState($state)
     {
+        $this->lastStateChangedAt = new \DateTime();
+        $this->stateHistory[] = $state;
         $this->currentState = $state;
+        $this->childrenContexts = [];
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getLastStateChangedAt()
+    {
+        return $this->lastStateChangedAt;
+    }
+
+    /**
+     * @param string $variableName
+     * @return string
+     */
+    public function getVariable($variableName)
+    {
+        return isset($this->variables[$variableName]) ? $this->variables[$variableName] : null;
+    }
+
+    /**
+     * @param string $variableName
+     * @param string $content
+     */
+    public function setVariable($variableName, $content)
+    {
+        $this->variables[$variableName] = $content;
+    }
+
+    /**
+     * @param string $variableName
+     */
+    public function unsetVariable($variableName)
+    {
+        if (isset($this->variables[$variableName])) {
+            unset($this->variables[$variableName]);
+        }
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getStateHistory()
+    {
+        return $this->stateHistory;
     }
 
     /**
