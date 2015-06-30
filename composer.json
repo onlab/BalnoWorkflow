@@ -15,7 +15,7 @@
     "autoload-dev": {
         "psr-4": {
             "BalnoWorkflow\\TestResource\\": "tests/resource/",
-            "BalnoWorkflow\\IntegrationTest\\": "tests/integration/",
+            "BalnoWorkflow\\FunctionalTest\\": "tests/functional/",
             "BalnoWorkflow\\UnitTest\\": "tests/unit/"
         }
     },

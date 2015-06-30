@@ -18,6 +18,7 @@ class WarehouseWorkflowDefinition implements WorkflowDefinitionInterface
                 ],
             ],
             'order_packaged' => null,
+            'order_canceled' => null,
         ];
     }
 }

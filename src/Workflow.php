@@ -156,10 +156,6 @@ class Workflow
             } elseif (empty($currentStateProperties['targets'])) {
                 $this->contextHandler->finish($context);
 
-                if ($context->getParentContext()) {
-                    $this->execute($context->getParentContext());
-                }
-
                 break;
             }
 
@@ -267,9 +263,26 @@ class Workflow
      */
     protected function runStateActions(ContextInterface $context, array $workingDefinition, $stateActionType)
     {
+        $raiseEventQueue = [];
+
         if (isset($workingDefinition[$context->getCurrentState()][$stateActionType])) {
             foreach ($workingDefinition[$context->getCurrentState()][$stateActionType] as $stateTypeAction) {
-                $this->runCommand($context, $this->actions, $stateTypeAction['action']);
+                if (isset($stateTypeAction['action'])) {
+                    $this->runCommand($context, $this->actions, $stateTypeAction['action']);
+
+                } elseif (isset($stateTypeAction['raise'])) {
+                    $raiseEventQueue[] = $stateTypeAction['raise'];
+                }
+            }
+        }
+
+        if (count($raiseEventQueue)) {
+            while ($context->getParentContext()) {
+                $context = $context->getParentContext();
+            }
+
+            foreach ($raiseEventQueue as $raiseEvent) {
+                $this->execute($context, $raiseEvent);
             }
         }
     }

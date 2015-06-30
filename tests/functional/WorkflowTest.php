@@ -1,6 +1,6 @@
 <?php
 
-namespace BalnoWorkflow\IntegrationTests;
+namespace BalnoWorkflow\FunctionalTest;
 
 use BalnoWorkflow\TestResource\Action\FraudAction;
 use BalnoWorkflow\TestResource\Action\InvoiceAction;
@@ -14,6 +14,7 @@ use BalnoWorkflow\TestResource\Definitions\OrderWorkflowDefinition;
 use BalnoWorkflow\TestResource\Guard\FraudGuard;
 use BalnoWorkflow\TestResource\Guard\InvoiceGuard;
 use BalnoWorkflow\TestResource\Guard\PaymentGuard;
+use BalnoWorkflow\TestResource\Guard\ShippingGuard;
 use BalnoWorkflow\TestResource\Guard\StockGuard;
 use BalnoWorkflow\TestResource\Handler\ContextHandler;
 use BalnoWorkflow\TestResource\TransitionEvents;
@@ -121,6 +122,10 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
             ->invoiceCreated(Argument::type(Context::class))->willReturn(true)->getObjectProphecy()
             ->reveal();
 
+        $guards['shipping'] = $this->prophesize(ShippingGuard::class)
+            ->hasNoCarrierAvailable(Argument::type(Context::class))->willReturn(false)->getObjectProphecy()
+            ->reveal();
+
         $workflow = new Workflow(
             WorkflowDefinitionContainer::getTestDefinitions(),
             $guards,
@@ -182,5 +187,76 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([
             'quoting_shipment', 'waiting_carrier', 'order_sent'
         ], $childrenContexts[2]->getStateHistory());
+    }
+
+    public function testRaisingEventCancelOrder()
+    {
+        $eventDispatcher = new EventDispatcher();
+        $actions = new \ArrayObject();
+        $guards = new \ArrayObject();
+
+        $context = new Context(OrderWorkflowDefinition::NAME);
+        $contextHandler = new ContextHandler();
+
+        $actions['stock'] = $this->prophesize(StockAction::class)
+            ->checkOrderAvailability($context)->getObjectProphecy()
+            ->reserveOrderItems($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['payment'] = $this->prophesize(PaymentAction::class)
+            ->authorizeOrderPayment($context)->getObjectProphecy()
+            ->capturePayment($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['fraud'] = $this->prophesize(FraudAction::class)
+            ->requestFraudAnalysis($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['order'] = $this->prophesize(OrderAction::class)
+            ->notifyOrderSent($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['invoice'] = $this->prophesize(InvoiceAction::class)
+            ->generateInvoice($context)->getObjectProphecy()
+            ->reveal();
+
+        $actions['shipping'] = $this->prophesize(ShippingAction::class)
+            ->quote(Argument::type(Context::class))->getObjectProphecy()
+            ->reveal();
+
+        $guards['stock'] = $this->prophesize(StockGuard::class)
+            ->isStocked($context)->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $guards['payment'] = $this->prophesize(PaymentGuard::class)
+            ->isAuthorized($context)->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $guards['fraud'] = $this->prophesize(FraudGuard::class)
+            ->requestSent($context)->willReturn(true)->getObjectProphecy()
+            ->isFraud($context)->willReturn(false)->getObjectProphecy()
+            ->isNotFraud($context)->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $guards['invoice'] = $this->prophesize(InvoiceGuard::class)
+            ->invoiceCreated(Argument::type(Context::class))->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $guards['shipping'] = $this->prophesize(ShippingGuard::class)
+            ->hasNoCarrierAvailable(Argument::type(Context::class))->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $workflow = new Workflow(
+            WorkflowDefinitionContainer::getTestDefinitions(),
+            $guards,
+            $actions,
+            $eventDispatcher,
+            $contextHandler
+        );
+
+        $workflow->execute($context);
+
+        $this->assertEquals('canceled', $context->getCurrentState());
+        $this->assertTrue($context->hasFinished());
     }
 }

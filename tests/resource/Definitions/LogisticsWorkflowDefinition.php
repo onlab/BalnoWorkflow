@@ -13,6 +13,7 @@ class LogisticsWorkflowDefinition implements WorkflowDefinitionInterface
         return [
             'quoting_shipment' => [
                 targets => [
+                    'order_canceled' => [ guard => 'shipping:hasNoCarrierAvailable' ],
                     'waiting_carrier' => null,
                 ],
                 onEntry => [
@@ -27,7 +28,11 @@ class LogisticsWorkflowDefinition implements WorkflowDefinitionInterface
                 ],
             ],
             'order_sent' => null,
-            'order_canceled' => null,
+            'order_canceled' => [
+                onEntry => [
+                    [ raise => TransitionEvents::CANCEL_ORDER ],
+                ],
+            ],
         ];
     }
 }
