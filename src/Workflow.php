@@ -201,7 +201,7 @@ class Workflow
         }
 
         foreach ($triggeredEventTransitions + $defaultTransitions as $stateTransition) {
-            if (!isset($stateTransition['transition']['guard']) || $this->runCommand($context, $this->guards, $stateTransition['transition']['guard'])) {
+            if (!isset($stateTransition['transition']['guard']) || $this->runCommand($context, $this->guards, $stateTransition['transition']['guard'], WorkflowEvents::ON_GUARD_ERROR)) {
                 return $stateTransition['targetState'];
             }
         }
@@ -211,10 +211,14 @@ class Workflow
 
     /**
      * @param ContextInterface $context
+     * @param \ArrayAccess $container
      * @param string $expression
-     * @return mixed
+     * @param string $eventErrorToRaise
+     * @return bool
+     * @throws InvalidRunnableExpressionException
+     * @throws \Exception
      */
-    protected function runCommand(ContextInterface $context, \ArrayAccess $container, $expression)
+    protected function runCommand(ContextInterface $context, \ArrayAccess $container, $expression, $eventErrorToRaise)
     {
         if (!preg_match('/' . self::REGEX_DEFINITION . '^\s*(?<service>[\w\.]+):(?<method>[\w]+)(?:\((?<method_arguments>(?&arguments)?)\))?\s*$/x', $expression, $serviceMatch)) {
             throw new InvalidRunnableExpressionException($expression);
@@ -228,7 +232,12 @@ class Workflow
         try {
             $result = call_user_func_array([$container[$serviceMatch['service']], $serviceMatch['method']], $parameters);
         } catch (\Exception $e) {
-            throw new \Exception($e->getMessage() . ' when running ' . $expression);
+            if ($this->eventDispatcher->hasListeners($eventErrorToRaise)) {
+                $this->eventDispatcher->dispatch($eventErrorToRaise, new WorkflowExceptionEvent($context, $e, $expression));
+                $result = false;
+            } else {
+                throw new \Exception($e->getMessage() . ' when running ' . $expression, 0, $e);
+            }
         }
 
         return $result;
@@ -268,7 +277,7 @@ class Workflow
         if (isset($workingDefinition[$context->getCurrentState()][$stateActionType])) {
             foreach ($workingDefinition[$context->getCurrentState()][$stateActionType] as $stateTypeAction) {
                 if (isset($stateTypeAction['action'])) {
-                    $this->runCommand($context, $this->actions, $stateTypeAction['action']);
+                    $this->runCommand($context, $this->actions, $stateTypeAction['action'], WorkflowEvents::ON_ACTION_ERROR);
 
                 } elseif (isset($stateTypeAction['raise'])) {
                     $raiseEventQueue[] = $stateTypeAction['raise'];

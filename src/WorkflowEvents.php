@@ -11,4 +11,7 @@ interface WorkflowEvents
     const END_TRANSITION = 'end_transition';
 
     const STATE_CHANGED = 'state_changed';
+
+    const ON_ACTION_ERROR = 'on_action_error';
+    const ON_GUARD_ERROR = 'on_guard_error';
 }
