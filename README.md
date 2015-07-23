@@ -1,6 +1,8 @@
 BalnoWorkflow
 =============
-> **IMPORTANT**: This project is still in an alpha version. Don't use it in production until some tests are completed.
+
+[![Build Status](https://travis-ci.org/onlab/BalnoWorkflow.svg?branch=master)](https://travis-ci.org/onlab/BalnoWorkflow)
+
 
 BalnoWorkflow is a workflow engine built for **PHP 5.5+** based on some other Workflows and State Machines that does
 not have all features in the same lib.
