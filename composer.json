@@ -2,6 +2,7 @@
     "name": "onlab/balno-workflow",
     "description": "A PHP 5.5+ Workflow with parallel execution",
     "require": {
+        "php": ">=5.5",
         "symfony/event-dispatcher": "^2.6"
     },
     "require-dev": {
