@@ -77,7 +77,9 @@ class Workflow
         $availableEvents = [];
         if (isset($currentStateProperties['targets'])) {
             foreach ($currentStateProperties['targets'] as $transition) {
-                if (isset($transition['event']) && !in_array($transition['event'], $availableEvents)) {
+                if (isset($transition['event']) && !in_array($transition['event'], $availableEvents) &&
+                    (!isset($transition['guard']) || $this->runCommand($context, $this->guards, $transition['guard'], WorkflowEvents::ON_GUARD_ERROR))
+                ) {
                     $availableEvents[] = $transition['event'];
                 }
             }

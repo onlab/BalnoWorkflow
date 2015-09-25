@@ -16,6 +16,7 @@ use BalnoWorkflow\TestResource\Guard\InvoiceGuard;
 use BalnoWorkflow\TestResource\Guard\PaymentGuard;
 use BalnoWorkflow\TestResource\Guard\ShippingGuard;
 use BalnoWorkflow\TestResource\Guard\StockGuard;
+use BalnoWorkflow\TestResource\Guard\UserGuard;
 use BalnoWorkflow\TestResource\Handler\ContextHandler;
 use BalnoWorkflow\TestResource\TransitionEvents;
 use BalnoWorkflow\TestResource\WorkflowDefinitionContainer;
@@ -258,5 +259,36 @@ class WorkflowTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('canceled', $context->getCurrentState());
         $this->assertTrue($context->hasFinished());
+    }
+
+    public function testEventListWithGuard()
+    {
+        $eventDispatcher = new EventDispatcher();
+        $actions = new \ArrayObject();
+        $guards = new \ArrayObject();
+        $contextHandler = new ContextHandler();
+
+        $workflow = new Workflow(
+            WorkflowDefinitionContainer::getTestDefinitions(),
+            $guards,
+            $actions,
+            $eventDispatcher,
+            $contextHandler
+        );
+
+        $context = new Context(OrderWorkflowDefinition::NAME);
+        $context->setCurrentState('clarify_fraud');
+
+        $guards['user'] = $this->prophesize(UserGuard::class)
+            ->isAllowedToExecute($context)->willReturn(false)->getObjectProphecy()
+            ->reveal();
+
+        $this->assertEquals(['retry_request_fraud', 'cancel_order'], array_values($workflow->getAvailableEvents($context)));
+
+        $guards['user'] = $this->prophesize(UserGuard::class)
+            ->isAllowedToExecute($context)->willReturn(true)->getObjectProphecy()
+            ->reveal();
+
+        $this->assertEquals(['retry_request_fraud', 'not_fraud', 'cancel_order'], array_values($workflow->getAvailableEvents($context)));
     }
 }
